@@ -9,8 +9,11 @@
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
     <Grid>
+        <StackPanel Orientation="Horizontal">
+          <Button Name="selectfile" Content="SelectFile" Click="SelectFile_Click" HorizontalAlignment="Right" VerticalAlignment="Top"/>
         <Button Name="lst" Content="List" Click="lst_Click" HorizontalAlignment="Right" VerticalAlignment="Top"/>
         <Button Name="con" Content="connect" Click="con_Click" HorizontalAlignment="Left" VerticalAlignment="Top"/>
-        <TextBlock x:Name="mytext" Width="300" Height="500" Text="blah" TextWrapping="WrapWholeWords"/>
+        </StackPanel>
+         <TextBlock x:Name="mytext" Width="300" Height="500" Text="blah" TextWrapping="WrapWholeWords"/>
     </Grid>
 </Page>

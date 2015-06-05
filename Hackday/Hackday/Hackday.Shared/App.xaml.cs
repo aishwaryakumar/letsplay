@@ -27,6 +27,7 @@ namespace Hackday
     {
 #if WINDOWS_PHONE_APP
         private TransitionCollection transitions;
+         ContinuationManager continuationManager;
 #endif
 
         /// <summary>
@@ -132,6 +133,17 @@ namespace Hackday
 
             // TODO: Save application state and stop any background activity
             deferral.Complete();
+        }
+
+        protected override void OnActivated(IActivatedEventArgs args)
+        {
+            base.OnActivated(args);
+            continuationManager = new ContinuationManager();
+            var continuationEventArgs = args as IContinuationActivatedEventArgs;
+            if (continuationEventArgs != null)
+            {
+                continuationManager.Continue(continuationEventArgs);
+            }
         }
     }
 }
