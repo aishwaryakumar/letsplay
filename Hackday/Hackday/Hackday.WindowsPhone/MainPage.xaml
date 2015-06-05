@@ -17,5 +17,6 @@
          <TextBlock x:Name="mytext" Width="300" Height="500" Text="blah" TextWrapping="WrapWholeWords"/>
          <Button Name="MediaPlayer" Content="MediaPlayer" Click="go_media" Margin="143,565,0,18"/>
     	<Button Name="data" Content="ping" VerticalAlignment="Bottom" HorizontalAlignment="Center" Click="data_Click"></Button>
+    	<MediaElement x:Name="MediaElement" />
     </Grid>
 </Page>

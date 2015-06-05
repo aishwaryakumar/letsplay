@@ -159,8 +159,6 @@ namespace Hackday
                     byte[] bytearray = new byte[(int)stream.Length];
                     bytearray = ConverToByteArray(stream);
                     SendSong(bytearray);
-                    //play.SetSource(stream.AsRandomAccessStream(), "audio/mpeg3");
-                    //play.Play();
                 }
             }
             else
@@ -195,6 +193,20 @@ namespace Hackday
         {
             Frame f = Window.Current.Content as Frame;
             f.Navigate(typeof(MediaPlayer));
+        }
+
+        public async void SaveSong(byte[] songArray, string songName)
+        {
+            try
+            {
+                var musicFolder = KnownFolders.MusicLibrary;
+                StorageFile sampleFile = await musicFolder.CreateFileAsync(songName, CreationCollisionOption.ReplaceExisting);  
+                await FileIO.WriteBytesAsync(sampleFile, songArray);               
+            }
+            catch(Exception ex)
+            {
+
+            }
         }
     }
 }
