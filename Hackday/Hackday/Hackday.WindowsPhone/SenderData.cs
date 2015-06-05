@@ -18,18 +18,23 @@ namespace Hackday
         NONE
     }
 
+    public class SongData
+    {
+        public byte[] SongByteArray;
+        public string Name;
+    }
+
+    public class Command
+    {
+        public CommandList command;
+        public int songIndex;
+        public SongData SongData;
+    }
+
     public class SenderData
     {
         public event ActionRequestedHandler ActionRequested;
-        public delegate void ActionRequestedHandler(Command cmd);
-
-        public class Command
-        {
-            public CommandList command;
-            public int songIndex;
-            public byte[] data;
-        }
-
+        public delegate void ActionRequestedHandler(Command cmd);       
         public void AddSongToList()
         {
             Command cmd = new Command();
@@ -61,11 +66,10 @@ namespace Hackday
             {
                 str = "0" + str;
             }
-            Debug.WriteLine(str);
             return str;
         }
 
-        public void SendActionToServer(CommandList ActionRequested, int index = -1, byte[] data = null)
+        public void SendActionToServer(CommandList ActionRequested, string name = "", int index = -1, byte[] data = null)
         {
             Command cmd = new Command();
             switch (ActionRequested)
@@ -73,7 +77,8 @@ namespace Hackday
                 case CommandList.ADD:
                     cmd.command = CommandList.ADD;
                     cmd.songIndex = index;
-                    cmd.data = data;
+                    SongData songData = new SongData() { SongByteArray = data, Name = name };
+                    cmd.SongData = songData;
                     break;
                 case CommandList.REMOVE:
                     cmd.command = CommandList.REMOVE;

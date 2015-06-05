@@ -33,43 +33,17 @@ namespace Hackday
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
-    public sealed partial class MainPage : Page, IFileOpenPickerContinuable
+    public sealed partial class MainPage : Page
     {
         private Windows.UI.Core.CoreDispatcher dispatcher;
-        SenderData sd;
         public MainPage()
         {
            
             this.InitializeComponent();
-            sd = new SenderData();
-            sd.ActionRequested += sd_ActionRequested;
             dispatcher = Windows.UI.Core.CoreWindow.GetForCurrentThread().Dispatcher;
             this.NavigationCacheMode = NavigationCacheMode.Required;
            
-        }
-
-        private void sd_ActionRequested(SenderData.Command cmd)
-        {
-            if (cmd != null)
-            {
-                switch (cmd.command)
-                {
-                    case CommandList.ADD:
-                        
-                        break;
-                    case CommandList.REMOVE:
-                        break;
-                    case CommandList.NEXT:
-                        break;
-                    case CommandList.PREVIOUS:
-                        break;
-                    case CommandList.TOGGLEPLAYSTATE:
-                        break;
-                    default:
-                        break;
-                }
-            }
-        }
+        }        
 
         /// <summary>
         /// Invoked when this page is about to be displayed in a Frame.
@@ -137,54 +111,6 @@ namespace Hackday
         }
 
 
-        private void SelectFile_Click(object sender, RoutedEventArgs e)
-        {
-            FileOpenPicker openPicker = new FileOpenPicker();
-            openPicker.ViewMode = PickerViewMode.Thumbnail;
-            openPicker.SuggestedStartLocation = PickerLocationId.MusicLibrary;
-            openPicker.FileTypeFilter.Add(".mp3");
-            // openPicker.CommitButtonText = "send";
-            openPicker.PickMultipleFilesAndContinue();
-        }
-
-        public async void ContinueFileOpenPicker(FileOpenPickerContinuationEventArgs args)
-        {
-            IReadOnlyList<StorageFile> files = args.Files;
-            if (files.Count > 0)
-            {
-                // Application now has read/write access to the picked file(s)
-                foreach (StorageFile file in files)
-                {
-                    Stream stream = await file.OpenStreamForReadAsync();
-                    byte[] bytearray = new byte[(int)stream.Length];
-                    bytearray = ConverToByteArray(stream);
-                    SendSong(bytearray);
-                }
-            }
-            else
-            {
-            }
-        }
-
-        public byte[] ConverToByteArray(Stream input)
-        {
-            byte[] buffer = new byte[16 * 1024];
-            using (MemoryStream ms = new MemoryStream())
-            {
-                int read;
-                while ((read = input.Read(buffer, 0, buffer.Length)) > 0)
-                {
-                    ms.Write(buffer, 0, read);
-                }
-                return ms.ToArray();
-            }
-        }
-
-        public void SendSong(byte[] byteArrary)
-        {
-            sd.SendActionToServer(CommandList.ADD, -1, byteArrary);
-		}
-		
         private void data_Click(object sender, RoutedEventArgs e)
         {
             ConnectionManager.Instance.SendData("" + DateTime.Now);
@@ -193,20 +119,6 @@ namespace Hackday
         {
             Frame f = Window.Current.Content as Frame;
             f.Navigate(typeof(MediaPlayer));
-        }
-
-        public async void SaveSong(byte[] songArray, string songName)
-        {
-            try
-            {
-                var musicFolder = KnownFolders.MusicLibrary;
-                StorageFile sampleFile = await musicFolder.CreateFileAsync(songName, CreationCollisionOption.ReplaceExisting);  
-                await FileIO.WriteBytesAsync(sampleFile, songArray);               
-            }
-            catch(Exception ex)
-            {
-
-            }
         }
     }
 }
