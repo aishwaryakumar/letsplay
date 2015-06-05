@@ -39,11 +39,13 @@ namespace Hackday
         SenderData sd;
         public MainPage()
         {
+           
             this.InitializeComponent();
             sd = new SenderData();
             sd.ActionRequested += sd_ActionRequested;
             dispatcher = Windows.UI.Core.CoreWindow.GetForCurrentThread().Dispatcher;
             this.NavigationCacheMode = NavigationCacheMode.Required;
+           
         }
 
         private void sd_ActionRequested(SenderData.Command cmd)
@@ -188,6 +190,11 @@ namespace Hackday
         private void data_Click(object sender, RoutedEventArgs e)
         {
             ConnectionManager.Instance.SendData("" + DateTime.Now);
+        }
+         private void go_media(object sender, RoutedEventArgs e)
+        {
+            Frame f = Window.Current.Content as Frame;
+            f.Navigate(typeof(MediaPlayer));
         }
     }
 }

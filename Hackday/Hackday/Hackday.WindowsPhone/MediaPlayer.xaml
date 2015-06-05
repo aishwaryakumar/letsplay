@@ -1,0 +1,35 @@
+﻿<Page
+    x:Class="Hackday.MediaPlayer"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:Hackday"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+
+    <Grid>
+        <MediaElement x:Name="Player"/>
+        <ListView Name="MyListView" HorizontalAlignment="Left" VerticalAlignment="Top">
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <Grid>
+                        <StackPanel Orientation="Vertical">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding name}" TextWrapping="Wrap" FontSize="25" Width="300"/>
+                                <Button Content="Remove" Tapped="RemoveSong" HorizontalAlignment="Right"/>
+                            </StackPanel>
+
+
+                            <StackPanel Orientation="Horizontal">
+                                <Button Content="Play" Tapped="PlaySong"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Grid>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+        <Button x:Name="Add_Songs" Click="add_songs" Content="Add Songs" Margin="10,567,0,16"/>
+        <Button x:Name="Pause" Click="pauseSongs" Content="Pause" Margin="266,567,0,16"/>
+    </Grid>
+</Page>
