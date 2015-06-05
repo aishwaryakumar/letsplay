@@ -28,6 +28,7 @@ namespace Hackday
     /// </summary>
     public sealed partial class MediaPlayer : Page, IFileOpenPickerContinuable
     {
+        Song CurrentSong;
         ObservableCollection<Song> SongCollection = new ObservableCollection<Song>();
         SenderData sd;
         public MediaPlayer()
@@ -36,6 +37,8 @@ namespace Hackday
             sd = new SenderData();
             MyListView.ItemsSource = SongCollection;
             sd.ActionRequested += sd_ActionRequested;
+            Player.MediaEnded -= next_song;
+            Player.MediaEnded += next_song;
 
             ConnectionManager.Instance.OnMasterDataReceived += DataReceived;
             ConnectionManager.Instance.OnSlaveDataReceived += DataReceived;
@@ -67,12 +70,66 @@ namespace Hackday
                         }
                         break;
                     case CommandList.REMOVE:
+                        {
+                            int index = cmd.songIndex;
+                            SongCollection.RemoveAt(index);
+                        }
                         break;
                     case CommandList.NEXT:
+                        {
+                            int index = cmd.songIndex;
+                            CurrentSong = SongCollection.ElementAt(index);
+                            if (ConnectionManager.Instance.IsMaster)
+                            {
+                                PlayMusic(CurrentSong);
+                            }
+                        }
                         break;
                     case CommandList.PREVIOUS:
+                        {
+                            int index = cmd.songIndex;
+                            CurrentSong = SongCollection.ElementAt(index);
+                            if (ConnectionManager.Instance.IsMaster)
+                            {
+                                PlayMusic(CurrentSong);
+                            }
+                        }
                         break;
                     case CommandList.TOGGLEPLAYSTATE:
+                        {
+                            int index = cmd.songIndex;
+                            if (index != -1)
+                            {
+                                CurrentSong = SongCollection.ElementAt(index);
+                                if (ConnectionManager.Instance.IsMaster)
+                                {
+                                    PlayMusic(CurrentSong);
+                                }
+                            }
+                            else
+                            {
+                                if (Player.CurrentState == MediaElementState.Playing)
+                                {
+                                    if (ConnectionManager.Instance.IsMaster)
+                                    {
+                                        Player.Pause();
+                                    }
+                                    PauseOrPlay.Content = "Play";
+                                    PauseOrPlay.Click -= pauseSongs;
+                                    PauseOrPlay.Click += playSongs;
+                                }
+                                else
+                                {
+                                    if (ConnectionManager.Instance.IsMaster)
+                                    {
+                                        Player.Play();
+                                    }
+                                    PauseOrPlay.Content = "Pause";
+                                    PauseOrPlay.Click -= playSongs;
+                                    PauseOrPlay.Click += pauseSongs;
+                                }
+                            }
+                        }
                         break;
                     default:
                         break;
@@ -103,25 +160,46 @@ namespace Hackday
         {
             Button b = sender as Button;
             Song s= b.DataContext as Song;
+            int index = SongCollection.IndexOf(s);
             SongCollection.Remove(s);
+            sd.SendActionToServer(CommandList.REMOVE, s.name, index, null);
 
         }
 
-        private async void PlaySong(object sender, TappedRoutedEventArgs e)
+        private void PlaySongFromList(object sender, RoutedEventArgs e)
         {
             Button b = sender as Button;
             Song s = b.DataContext as Song;
-            string n = s.name;
-            var folder = KnownFolders.MusicLibrary;
-            StorageFile file =await  folder.GetFileAsync(n);
-            Stream stream = await file.OpenStreamForReadAsync();
-            Player.SetSource(stream.AsRandomAccessStream(), "audio/mpeg3");
-            Player.Play();
+            CurrentSong = s;
+            
+            PlayMusic(CurrentSong);
+           
+            sd.SendActionToServer(CommandList.TOGGLEPLAYSTATE, s.name, SongCollection.IndexOf(s), null);
         }
 
         private void pauseSongs(object sender, RoutedEventArgs e)
         {
-            Player.Pause();
+            if (ConnectionManager.Instance.IsMaster)
+            {
+                Player.Pause();
+            }
+            PauseOrPlay.Content = "Play";
+            PauseOrPlay.Click -= pauseSongs;
+            PauseOrPlay.Click += playSongs;
+            sd.SendActionToServer(CommandList.TOGGLEPLAYSTATE,CurrentSong.name, -1, null);
+
+        }
+
+        private void playSongs(object sender, RoutedEventArgs e)
+        {
+            if (ConnectionManager.Instance.IsMaster)
+            {
+                Player.Play();
+            }
+            PauseOrPlay.Content = "Pause";
+            PauseOrPlay.Click -= playSongs;
+            PauseOrPlay.Click += pauseSongs;
+            sd.SendActionToServer(CommandList.TOGGLEPLAYSTATE,CurrentSong.name, -1, null);
         }
 
         public async void ContinueFileOpenPicker(FileOpenPickerContinuationEventArgs args)
@@ -151,6 +229,18 @@ namespace Hackday
             }
         }
 
+        public async void PlayMusic(Song song)
+        {
+            var folder = KnownFolders.MusicLibrary;
+            StorageFile file = await folder.GetFileAsync(song.name);
+            Stream stream = await file.OpenStreamForReadAsync();
+            Player.SetSource(stream.AsRandomAccessStream(), "audio/mpeg3");
+            if (ConnectionManager.Instance.IsMaster)
+            {
+                Player.Play();
+            }
+        }
+
         public byte[] ConverToByteArray(Stream input)
         {
             byte[] buffer = new byte[16 * 1024];
@@ -176,6 +266,34 @@ namespace Hackday
             catch (Exception ex)
             {
 
+            }
+        }
+
+        private void next_song(object sender, RoutedEventArgs e)
+        {
+            int currentIndex=SongCollection.IndexOf(CurrentSong);
+            if (currentIndex != SongCollection.Count-1)
+            {
+                CurrentSong = SongCollection.ElementAt(++currentIndex);
+                if (ConnectionManager.Instance.IsMaster)
+                {
+                    PlayMusic(CurrentSong);
+                }
+                sd.SendActionToServer(CommandList.NEXT, CurrentSong.name, currentIndex, null);
+            }
+        }
+
+        private void prev_song(object sender, RoutedEventArgs e)
+        {
+            int currentIndex = SongCollection.IndexOf(CurrentSong);
+            if (currentIndex != 0)
+            {
+                CurrentSong = SongCollection.ElementAt(--currentIndex);
+                if (ConnectionManager.Instance.IsMaster)
+                {
+                    PlayMusic(CurrentSong);
+                }
+                sd.SendActionToServer(CommandList.PREVIOUS, CurrentSong.name, currentIndex, null);
             }
         }
     }

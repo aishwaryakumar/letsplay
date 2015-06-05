@@ -22,14 +22,16 @@
 
 
                             <StackPanel Orientation="Horizontal">
-                                <Button Content="Play" Tapped="PlaySong"/>
+                                <Button x:Name="PlayFromList" Content="Play" Click="PlaySongFromList"/>
                             </StackPanel>
                         </StackPanel>
                     </Grid>
                 </DataTemplate>
             </ListView.ItemTemplate>
         </ListView>
-        <Button x:Name="Add_Songs" Click="add_songs" Content="Add Songs" Margin="10,567,0,16"/>
-        <Button x:Name="Pause" Click="pauseSongs" Content="Pause" Margin="266,567,0,16"/>
+        <Button x:Name="Add_Songs" Click="add_songs" Content="Add Songs" Margin="0,567,0,16"/>
+        <Button x:Name="NextSong" Click="next_song" Content="Next" Margin="304,567,-13,16" Width="58" RenderTransformOrigin="1.177,5.456"/>
+        <Button x:Name="PauseOrPlay" Click="pauseSongs" Content="Pause" Margin="213,567,0,16"/>
+        <Button x:Name="PrevSong" Click="prev_song" Content="Prev" Margin="104,567,0,16"/>
     </Grid>
 </Page>
