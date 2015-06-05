@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
@@ -35,6 +36,18 @@ namespace Hackday
             sd = new SenderData();
             MyListView.ItemsSource = SongCollection;
             sd.ActionRequested += sd_ActionRequested;
+
+            ConnectionManager.Instance.OnMasterDataReceived += DataReceived;
+            ConnectionManager.Instance.OnSlaveDataReceived += DataReceived;
+        }
+
+        private void DataReceived(string data)
+        {
+            Command cmd = JsonConvert.DeserializeObject<Command>(data);
+            if (cmd != null)
+            {
+                sd_ActionRequested(cmd);
+            }
         }
 
         private void sd_ActionRequested(Command cmd)

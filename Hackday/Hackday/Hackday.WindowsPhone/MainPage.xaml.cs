@@ -60,19 +60,19 @@ namespace Hackday
             // If you are using the NavigationHelper provided by some templates,
             // this event is handled for you.
             ConnectionManager.Instance.Init();
-        //    ConnectionManager.Instance.OnMasterDataReceived += Instance_OnMasterDataReceived;
-        //    ConnectionManager.Instance.OnSlaveDataReceived += Instance_OnSlaveDataReceived;
+            ConnectionManager.Instance.OnMasterDataReceived += Instance_OnMasterDataReceived;
+            ConnectionManager.Instance.OnSlaveDataReceived += Instance_OnSlaveDataReceived;
         }
 
-        //void Instance_OnSlaveDataReceived(string data)
-        //{
-        //    appendText("slave:" + data);
-        //}
+        void Instance_OnSlaveDataReceived(string data)
+        {
+            appendText("slave:" + data);
+        }
 
-        //void Instance_OnMasterDataReceived(string data)
-        //{
-        //    appendText("master:" + data);
-        //}
+        void Instance_OnMasterDataReceived(string data)
+        {
+            appendText("master:" + data);
+        }
 
 
         void appendText(string text)

@@ -85,6 +85,7 @@ namespace Hackday
                 IsMaster = false;
                 PeerFinder.ConnectionRequested -= PeerFinder_ConnectionRequested;
                 master = socket;
+                appendText("\n connection complete");
                 var dispatcherTimer = new DispatcherTimer();
                 dispatcherTimer.Tick += new EventHandler<object>(getDataFromMaster);
                 dispatcherTimer.Interval = new TimeSpan(0, 0, 1);
@@ -194,7 +195,7 @@ namespace Hackday
                     }
                     catch (Exception ex)
                     {
-                        return appendText(ex.Message);
+                        //return appendText(ex.Message);
                     }
                 }
                 PeerFinder.ConnectionRequested -= PeerFinder_ConnectionRequested;
@@ -230,6 +231,8 @@ namespace Hackday
                         var sock = pair.Value;
                         DataReader reader = new DataReader(sock.InputStream);
                         bool received = false;
+                        //inp = reader.ReadString(5);
+                        //OnSlaveDataReceived(inp);
                         do
                         {
                             received = false;
@@ -301,6 +304,7 @@ namespace Hackday
         private async void writedata(StreamSocket socket, string data)
         {
             DataWriter writer = new DataWriter(socket.OutputStream);
+            Debug.WriteLine(data.Substring(0, 10));
             writer.WriteString(data);
             await writer.StoreAsync();
         }
@@ -322,14 +326,14 @@ namespace Hackday
         private string appendText(string text)
         {
             Debug.WriteLine(text);
-            //if (OnSlaveDataReceived != null)
-            //{
-            //    OnSlaveDataReceived(text);
-            //}
-            //if (OnMasterDataReceived != null)
-            //{
-            //    OnMasterDataReceived(text);
-            //}
+            if (OnSlaveDataReceived != null)
+            {
+                OnSlaveDataReceived(text);
+            }
+            if (OnMasterDataReceived != null)
+            {
+                OnMasterDataReceived(text);
+            }
             return text;
         }
 

@@ -99,17 +99,7 @@ namespace Hackday
             }
             string addRequest = JsonConvert.SerializeObject(cmd);
             string request = AppendRequestLength(addRequest);
+            ConnectionManager.Instance.SendData(request);
         }
-
-        public void TakeAction(string str)
-        {
-            Command cmd =  JsonConvert.DeserializeObject<Command>(str);
-            if(cmd != null)
-            {
-                if (ActionRequested != null)
-                    ActionRequested(cmd);
-            }
-        }
-
     }
 }
