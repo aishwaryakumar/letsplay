@@ -1,23 +1,27 @@
 ﻿using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace App1
+namespace Hackday
 {
+    public enum CommandList
+    {
+        ADD,
+        REMOVE,
+        NEXT,
+        PREVIOUS,
+        TOGGLEPLAYSTATE,
+        NONE
+    }
+
     public class SenderData
     {
-        public enum CommandList
-        {
-            ADD,
-            REMOVE,
-            NEXT,
-            PREVIOUS,
-            TOGGLEPLAYSTATE,
-            NONE
-        }
+        public event ActionRequestedHandler ActionRequested;
+        public delegate void ActionRequestedHandler(Command cmd);
 
         public class Command
         {
@@ -33,12 +37,32 @@ namespace App1
             string addRequest = JsonConvert.SerializeObject(cmd);
         }
 
+        int charLen = 10;
+
         public void RemoveSong(int index)
         {
             Command cmd = new Command();
             cmd.command = CommandList.PREVIOUS;
             cmd.songIndex = index;
             string addRequest = JsonConvert.SerializeObject(cmd);
+        }
+
+        private string AppendRequestLength(string req)
+        {
+            int length = req.Length;
+            string str = length.ToString() + req;
+            int numdigits = 0;
+            while(length > 0)
+            {
+                numdigits++;
+                length = length / 10;
+            }
+            for(int i = 0; i < charLen-numdigits; i++)
+            {
+                str = "0" + str;
+            }
+            Debug.WriteLine(str);
+            return str;
         }
 
         public void SendActionToServer(CommandList ActionRequested, int index = -1, byte[] data = null)
@@ -48,7 +72,7 @@ namespace App1
             {
                 case CommandList.ADD:
                     cmd.command = CommandList.ADD;
-                    cmd.songIndex = 0;
+                    cmd.songIndex = index;
                     cmd.data = data;
                     break;
                 case CommandList.REMOVE:
@@ -69,29 +93,16 @@ namespace App1
                     break;
             }
             string addRequest = JsonConvert.SerializeObject(cmd);
+            string request = AppendRequestLength(addRequest);
         }
 
         public void TakeAction(string str)
         {
-            Command cmd =  JsonConvert.DeserializeObject(str) as Command;
+            Command cmd =  JsonConvert.DeserializeObject<Command>(str);
             if(cmd != null)
             {
-                switch (cmd.command)
-                {
-                    case CommandList.ADD:
-                        break;
-                    case CommandList.REMOVE:
-
-                        break;
-                    case CommandList.NEXT:
-                        break;
-                    case CommandList.PREVIOUS:
-                        break;
-                    case CommandList.TOGGLEPLAYSTATE:
-                        break;
-                    default:
-                        break;
-                }
+                if (ActionRequested != null)
+                    ActionRequested(cmd);
             }
         }
 

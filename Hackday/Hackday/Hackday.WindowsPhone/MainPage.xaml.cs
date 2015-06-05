@@ -24,7 +24,7 @@ using Windows.UI.Xaml.Data;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
-using App1;
+using Hackday;
 
 // The Blank Page item template is documented at http://go.microsoft.com/fwlink/?LinkId=234238
 
@@ -41,8 +41,32 @@ namespace Hackday
         {
             this.InitializeComponent();
             sd = new SenderData();
+            sd.ActionRequested += sd_ActionRequested;
             dispatcher = Windows.UI.Core.CoreWindow.GetForCurrentThread().Dispatcher;
             this.NavigationCacheMode = NavigationCacheMode.Required;
+        }
+
+        private void sd_ActionRequested(SenderData.Command cmd)
+        {
+            if (cmd != null)
+            {
+                switch (cmd.command)
+                {
+                    case CommandList.ADD:
+                        
+                        break;
+                    case CommandList.REMOVE:
+                        break;
+                    case CommandList.NEXT:
+                        break;
+                    case CommandList.PREVIOUS:
+                        break;
+                    case CommandList.TOGGLEPLAYSTATE:
+                        break;
+                    default:
+                        break;
+                }
+            }
         }
 
         /// <summary>
@@ -158,7 +182,7 @@ namespace Hackday
 
         public void SendSong(byte[] byteArrary)
         {
-            sd.SendActionToServer(SenderData.CommandList.ADD, -1, byteArrary);
+            sd.SendActionToServer(CommandList.ADD, -1, byteArrary);
 		}
 		
         private void data_Click(object sender, RoutedEventArgs e)
