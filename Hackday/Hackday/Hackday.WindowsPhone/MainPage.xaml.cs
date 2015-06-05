@@ -59,69 +59,11 @@ namespace Hackday
             // Windows.Phone.UI.Input.HardwareButtons.BackPressed event.
             // If you are using the NavigationHelper provided by some templates,
             // this event is handled for you.
-            Pair();
+            ConnectionManager.Instance.Init();
         }
 
-        private async void Pair()
-        {
-            await Task.Yield();
 
-            // PeerFinder.Start() is used to advertise our presence so that peers can find us. 
-            // It must always be called before FindAllPeersAsync.
-            PeerFinder.Start();
 
-            PeerFinder.ConnectionRequested += PeerFinder_ConnectionRequested;
-        }
-
-        void PeerFinder_ConnectionRequested(object sender, ConnectionRequestedEventArgs args)
-        {
-            try
-            {
-                if (ShouldConnect())
-                {
-                    // Go ahead and connect
-                    ConnectToPeer(args.PeerInformation);
-                }
-            }
-            catch (Exception e)
-            {
-                MessageDialog d = new MessageDialog(e.Message);
-                d.ShowAsync();
-            }
-
-        }
-
-        async void ConnectToPeer(PeerInformation peer)
-        {
-            try
-            {
-                appendText("connection requested");
-                byte[] buf = new byte[2];
-                var buffer = WindowsRuntimeBufferExtensions.AsBuffer(buf);
-                StreamSocket socket = await PeerFinder.ConnectAsync(peer);
-                appendText("\nconnection established");
-                using (var stream = socket.InputStream)
-                {
-                    await stream.ReadAsync(buffer, 2, Windows.Storage.Streams.InputStreamOptions.None);
-                    appendText("\n data read \n");
-                    foreach (var x in buffer.ToArray())
-                    {
-                        appendText("\n" + x);
-                    }
-                }
-            }
-            catch (Exception e)
-            {
-                MessageDialog d = new MessageDialog(e.Message);
-                d.ShowAsync();
-            }
-        }
-
-        private bool ShouldConnect()
-        {
-            // Determine whether to accept this connection request and return
-            return true;
-        }
 
         void appendText(string text)
         {
@@ -131,69 +73,11 @@ namespace Hackday
             });
         }
 
-        List<StreamSocket> sockets = new List<StreamSocket>(2);
-
         private async void con_Click(object sender, RoutedEventArgs e)
         {
             // Configure PeerFinder to search for all paired devices.
             //PeerFinder.AlternateIdentities["Bluetooth:Paired"] = "";
-            var peers = await PeerFinder.FindAllPeersAsync();
-
-            if (peers.Count == 0)
-            {
-                appendText("No paired devices were found.");
-            }
-            else
-            {
-                // Attempt a connection
-                byte[] buf = new byte[2];
-                buf[0] = 1;
-                buf[1] = 2;
-                foreach (var selectedPeer in peers)
-                {
-                    try
-                    {
-                        //DeviceInformationCollection DeviceInfoCollection = await DeviceInformation.FindAllAsync(RfcommDeviceService.GetDeviceSelector(RfcommServiceId.SerialPort));
-
-                        //var numDevices = DeviceInfoCollection.Count();
-
-                        //if (numDevices == 0)
-                        //{
-                        //    MessageDialog md = new MessageDialog("No paired devices found", "Title");
-                        //    await md.ShowAsync();
-
-                        //    return;
-                        //}
-
-                        //DeviceInformation DeviceInfo = DeviceInfoCollection[0];
-                        //var service = await RfcommDeviceService.FromIdAsync(DeviceInfo.Id);
-
-                        //StreamSocket socket = new StreamSocket();
-                        //await socket.ConnectAsync(selectedPeer.HostName, "1");
-                        //await socket.ConnectAsync(service.ConnectionHostName, service.ConnectionServiceName, service.ProtectionLevel);
-
-                        StreamSocket socket = await PeerFinder.ConnectAsync(selectedPeer);
-                        sockets.Add(socket);
-
-                    }
-                    catch (Exception ex)
-                    {
-                        appendText(ex.Message);
-                    }
-                }
-
-                var buffer = WindowsRuntimeBufferExtensions.AsBuffer(buf);
-                foreach (var s in sockets)
-                {
-                    var x = await s.OutputStream.WriteAsync(buffer);
-                }
-
-                //using (var streamSocket = await PeerFinder.ConnectAsync(selectedPeer))
-                //{
-                //    var buffer = WindowsRuntimeBufferExtensions.AsBuffer(buf);
-                //    var x = await streamSocket.OutputStream.WriteAsync(buffer);
-                //}
-            }
+            
         }
 
         private async void lst_Click(object sender, RoutedEventArgs e)
@@ -201,7 +85,7 @@ namespace Hackday
             var peers = await PeerFinder.FindAllPeersAsync();
             if (peers.Count == 0)
             {
-                appendText("No paired devices were found.");
+                appendText("No paired devices were found.\n");
             }
             else
             {
@@ -210,7 +94,7 @@ namespace Hackday
                 int i = 0;
                 foreach (var peer in peers)
                 {
-                    appendText("Device " + i++ + " / name: " + peer.DisplayName);
+                    appendText("Device " + i++ + " / name: " + peer.DisplayName + "\n");
                 }
             }
         }
