@@ -8,7 +8,7 @@ namespace Hackday
 {
     public interface DataListener
     {
-        void OnDataFromMaster(string data)
-        void OnDataFromSlaves(string data)
+        void OnDataFromMaster(string data);
+        void OnDataFromSlaves(string data);
     }
 }

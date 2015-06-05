@@ -60,9 +60,19 @@ namespace Hackday
             // If you are using the NavigationHelper provided by some templates,
             // this event is handled for you.
             ConnectionManager.Instance.Init();
+        //    ConnectionManager.Instance.OnMasterDataReceived += Instance_OnMasterDataReceived;
+        //    ConnectionManager.Instance.OnSlaveDataReceived += Instance_OnSlaveDataReceived;
         }
 
+        //void Instance_OnSlaveDataReceived(string data)
+        //{
+        //    appendText("slave:" + data);
+        //}
 
+        //void Instance_OnMasterDataReceived(string data)
+        //{
+        //    appendText("master:" + data);
+        //}
 
 
         void appendText(string text)
@@ -77,7 +87,8 @@ namespace Hackday
         {
             // Configure PeerFinder to search for all paired devices.
             //PeerFinder.AlternateIdentities["Bluetooth:Paired"] = "";
-            
+            var connectedpeers = await ConnectionManager.Instance.StartPairing();
+            appendText(connectedpeers);
         }
 
         private async void lst_Click(object sender, RoutedEventArgs e)
@@ -98,6 +109,7 @@ namespace Hackday
                 }
             }
         }
+
 
         private void SelectFile_Click(object sender, RoutedEventArgs e)
         {
@@ -147,6 +159,11 @@ namespace Hackday
         public void SendSong(byte[] byteArrary)
         {
             sd.SendActionToServer(SenderData.CommandList.ADD, -1, byteArrary);
+		}
+		
+        private void data_Click(object sender, RoutedEventArgs e)
+        {
+            ConnectionManager.Instance.SendData("" + DateTime.Now);
         }
     }
 }

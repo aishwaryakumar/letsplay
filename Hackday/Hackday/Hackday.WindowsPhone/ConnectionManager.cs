@@ -14,6 +14,10 @@ namespace Hackday
 {
     public class ConnectionManager
     {
+        public delegate void OnData(string data);
+        public event OnData OnMasterDataReceived;
+        public event OnData OnSlaveDataReceived;
+
         private DataListener listener;
         public bool IsMaster = false;
         private Dictionary<string, StreamSocket> slaves = new Dictionary<string, StreamSocket>();
@@ -64,7 +68,7 @@ namespace Hackday
             }
             catch (Exception e)
             {
-                appendText(e.Message);
+                //appendText(e.Message);
             }
 
         }
@@ -99,10 +103,10 @@ namespace Hackday
             }
             catch (Exception e)
             {
-                appendText(e.Message);
+                //appendText(e.Message);
             }
         }
-
+        const int CONTROL_SIZE = 10;
         private void getDataFromMaster(object sender, object e)
         {
             try
@@ -115,14 +119,21 @@ namespace Hackday
                     do
                     {
                         received = false;
-                        var len = reader.ReadString(4);
+                        var len = reader.ReadString(CONTROL_SIZE);
                         uint length = 0;
                         if (uint.TryParse(len, out length))
                         {
                             if (length > 0)
                             {
                                 inp = reader.ReadString(length);
-                                listener.OnDataFromMaster(inp);
+                                if (listener != null)
+                                {
+                                    listener.OnDataFromMaster(inp);
+                                }
+                                if (OnMasterDataReceived != null)
+                                {
+                                    OnMasterDataReceived(inp);
+                                }
                                 received = true;
                             }
                         }
@@ -132,7 +143,7 @@ namespace Hackday
             }
             catch (Exception ex)
             {
-                appendText(ex.Message);
+                //appendText(ex.Message);
             }
         }
 
@@ -222,14 +233,21 @@ namespace Hackday
                         do
                         {
                             received = false;
-                            var len = reader.ReadString(4);
+                            var len = reader.ReadString(CONTROL_SIZE);
                             uint length = 0;
                             if (uint.TryParse(len, out length))
                             {
                                 if (length > 0)
                                 {
                                     inp = reader.ReadString(length);
-                                    listener.OnDataFromMaster(inp);
+                                    if (listener != null)
+                                    {
+                                        listener.OnDataFromSlaves(inp);
+                                    }
+                                    if (OnSlaveDataReceived != null)
+                                    {
+                                        OnSlaveDataReceived(inp);
+                                    }
                                     received = true;
                                 }
                             }
@@ -240,7 +258,7 @@ namespace Hackday
             }
             catch (Exception ex)
             {
-                appendText(ex.Message);
+                //appendText(ex.Message);
             }
         }
 
@@ -304,6 +322,14 @@ namespace Hackday
         private string appendText(string text)
         {
             Debug.WriteLine(text);
+            //if (OnSlaveDataReceived != null)
+            //{
+            //    OnSlaveDataReceived(text);
+            //}
+            //if (OnMasterDataReceived != null)
+            //{
+            //    OnMasterDataReceived(text);
+            //}
             return text;
         }
 
