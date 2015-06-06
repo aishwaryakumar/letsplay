@@ -313,13 +313,12 @@ namespace Hackday
         }
 
         public async void PlayMusic(Song song)
-        {
-            var folder = KnownFolders.MusicLibrary;
-            StorageFile file = await folder.GetFileAsync(song.name);
-            Stream stream = await file.OpenStreamForReadAsync();
-
+        {          
             if (ConnectionManager.Instance.IsMaster)
             {
+                var folder = KnownFolders.MusicLibrary;
+                StorageFile file = await folder.GetFileAsync(song.name);
+                Stream stream = await file.OpenStreamForReadAsync();
                 await dispatcher.RunAsync(CoreDispatcherPriority.High, () =>
                     {
                         Player.SetSource(stream.AsRandomAccessStream(), "audio/mpeg3");
