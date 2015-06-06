@@ -183,11 +183,14 @@ namespace Hackday
             sd.SendActionToServer(CommandList.TOGGLEPLAYSTATE, s.name, SongCollection.IndexOf(s), null);
         }
 
-        private void pauseSongs(object sender, RoutedEventArgs e)
+        private async void pauseSongs(object sender, RoutedEventArgs e)
         {
             if (ConnectionManager.Instance.IsMaster)
             {
-                Player.Pause();
+                await dispatcher.RunAsync(CoreDispatcherPriority.High, () =>
+                {
+                    Player.Pause();
+                });
             }
             PauseOrPlay.Content = "Play";
             PauseOrPlay.Click -= pauseSongs;
@@ -196,11 +199,14 @@ namespace Hackday
 
         }
 
-        private void playSongs(object sender, RoutedEventArgs e)
+        private async void playSongs(object sender, RoutedEventArgs e)
         {
             if (ConnectionManager.Instance.IsMaster)
             {
-                Player.Play();
+                await dispatcher.RunAsync(CoreDispatcherPriority.High, () =>
+                {
+                    Player.Play();
+                });
             }
             PauseOrPlay.Content = "Pause";
             PauseOrPlay.Click -= playSongs;
@@ -240,10 +246,14 @@ namespace Hackday
             var folder = KnownFolders.MusicLibrary;
             StorageFile file = await folder.GetFileAsync(song.name);
             Stream stream = await file.OpenStreamForReadAsync();
-            Player.SetSource(stream.AsRandomAccessStream(), "audio/mpeg3");
+           
             if (ConnectionManager.Instance.IsMaster)
             {
-                Player.Play();
+                await dispatcher.RunAsync(CoreDispatcherPriority.High, () =>
+                    {
+                        Player.SetSource(stream.AsRandomAccessStream(), "audio/mpeg3");
+                        Player.Play();
+                    });
             }
         }
 
