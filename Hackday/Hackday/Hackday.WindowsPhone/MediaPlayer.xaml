@@ -17,12 +17,21 @@
                         <StackPanel Orientation="Vertical">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="{Binding name}" TextWrapping="Wrap" Foreground="Black" FontSize="20" Width="300"/>
-                                <Button Content="Remove" BorderBrush="Black" Tapped="RemoveSong" Foreground="Black" HorizontalAlignment="Right"/>
+                                
                             </StackPanel>
 
 
                             <StackPanel Orientation="Horizontal">
-                                <Button x:Name="PlayFromList" BorderBrush="Black" Foreground="Black" Content="Play" Click="PlaySongFromList"/>
+                                <Button x:Name="PlayFromList" BorderBrush="Black" Foreground="Black" Click="PlaySongFromList">
+                                    <Button.Content>
+                                        <SymbolIcon Symbol="Play"/>
+                                    </Button.Content>
+                                </Button>
+                                <Button BorderBrush="Black" Tapped="RemoveSong" Foreground="Black" HorizontalAlignment="Right">
+                                    <Button.Content>
+                                        <SymbolIcon  Symbol="Remove"/>
+                                    </Button.Content>
+                                </Button>
                             </StackPanel>
                         </StackPanel>
                     </Grid>
@@ -30,10 +39,26 @@
             </ListView.ItemTemplate>
         </ListView>
         <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom">
-            <Button x:Name="Add_Songs" Click="add_songs" BorderBrush="Black" Content="Add Song" Foreground="Black"/>
-            <Button x:Name="NextSong" Click="next_song" BorderBrush="Black" Content="Next"  Foreground="Black"/>
-            <Button x:Name="PauseOrPlay" Click="pauseSongs" BorderBrush="Black" Content="Pause" Foreground="Black" />
-            <Button x:Name="PrevSong" Click="prev_song" BorderBrush="Black" Content="Prev" Foreground="Black" />
+            <Button x:Name="Add_Songs" Click="add_songs" BorderBrush="Black" Foreground="Black">
+                <Button.Content>
+                    <SymbolIcon Symbol="Add"/>
+                </Button.Content>
+            </Button>
+            <Button x:Name="PrevSong" Click="prev_song" BorderBrush="Black" Foreground="Black" >
+                <Button.Content>
+                    <SymbolIcon Symbol="Previous"/>
+                </Button.Content>
+            </Button>
+            <Button x:Name="PauseOrPlay" Click="pauseSongs" BorderBrush="Black" Foreground="Black">
+                <Button.Content>
+                    <SymbolIcon  x:Name="PlayOrPause" Symbol="Pause"/>
+                </Button.Content>
+            </Button>
+            <Button x:Name="NextSong" Click="next_song" BorderBrush="Black" Foreground="Black">
+                <Button.Content>
+                    <SymbolIcon Symbol="Next"/>
+                </Button.Content>
+            </Button>
         </StackPanel>
     </Grid>
 </Page>

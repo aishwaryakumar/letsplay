@@ -75,8 +75,16 @@ namespace Hackday
                                     {
                                         SongCollection.Add(new Song() { name = songData.Name });
                                     });
+
                                     sd.SendActionToServer(CommandList.LISTUPDATE, "", -1, null, SongCollection.ToList());
                                 }
+                            }
+                            else 
+                            {
+                                await dispatcher.RunAsync(CoreDispatcherPriority.High, () =>
+                                {
+                                    SongCollection.Add(new Song() { name = songData.Name });
+                                });
                             }
                         }
                         break;
@@ -90,6 +98,13 @@ namespace Hackday
                                     SongCollection.RemoveAt(index);
                                 });
                                 sd.SendActionToServer(CommandList.LISTUPDATE, "", -1, null, SongCollection.ToList());
+                            }
+                            else 
+                            {
+                                await dispatcher.RunAsync(CoreDispatcherPriority.High, () =>
+                                {
+                                    SongCollection.RemoveAt(index);
+                                });
                             }
                         }
                         break;
@@ -126,6 +141,25 @@ namespace Hackday
                             }
                             else
                             {
+                                if (!ConnectionManager.Instance.IsMaster)
+                                {
+                                    await dispatcher.RunAsync(CoreDispatcherPriority.High, () =>
+                                    {
+                                        if (PlayOrPause.Symbol == Symbol.Pause)
+                                        {
+                                            PlayOrPause.Symbol = Symbol.Play;
+                                            PauseOrPlay.Click -= pauseSongs;
+                                            PauseOrPlay.Click += playSongs;
+                                        }
+                                        else
+                                        {
+                                            PlayOrPause.Symbol = Symbol.Pause;
+                                            PauseOrPlay.Click -= playSongs;
+                                            PauseOrPlay.Click += pauseSongs;
+                                        }
+                                        
+                                    });
+                                }
                                 MediaElementState m = MediaElementState.Closed;
                                 await dispatcher.RunAsync(CoreDispatcherPriority.High, () =>
                                 {
@@ -138,7 +172,7 @@ namespace Hackday
                                         await dispatcher.RunAsync(CoreDispatcherPriority.High, () =>
                                         {
                                             Player.Pause();
-                                            PauseOrPlay.Content = "Play";
+                                            PlayOrPause.Symbol = Symbol.Play;
                                             PauseOrPlay.Click -= pauseSongs;
                                             PauseOrPlay.Click += playSongs;
                                         });
@@ -152,12 +186,11 @@ namespace Hackday
                                         await dispatcher.RunAsync(CoreDispatcherPriority.High, () =>
                                         {
                                             Player.Play();
-                                            PauseOrPlay.Content = "Pause";
+                                            PlayOrPause.Symbol = Symbol.Pause;
                                             PauseOrPlay.Click -= playSongs;
                                             PauseOrPlay.Click += pauseSongs;
                                         });
                                     }
-                                    
                                 }
                             }
                         }
@@ -229,7 +262,7 @@ namespace Hackday
                     Player.Pause();
                 });
             }
-            PauseOrPlay.Content = "Play";
+            PlayOrPause.Symbol = Symbol.Play;
             PauseOrPlay.Click -= pauseSongs;
             PauseOrPlay.Click += playSongs;
             sd.SendActionToServer(CommandList.TOGGLEPLAYSTATE, CurrentSong.name, -1, null);
@@ -245,7 +278,7 @@ namespace Hackday
                     Player.Play();
                 });
             }
-            PauseOrPlay.Content = "Pause";
+            PlayOrPause.Symbol = Symbol.Pause;
             PauseOrPlay.Click -= playSongs;
             PauseOrPlay.Click += pauseSongs;
             sd.SendActionToServer(CommandList.TOGGLEPLAYSTATE, CurrentSong.name, -1, null);
