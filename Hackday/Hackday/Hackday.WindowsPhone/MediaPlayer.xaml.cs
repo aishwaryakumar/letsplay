@@ -65,20 +65,32 @@ namespace Hackday
                     case CommandList.ADD:
                         {
                             SongData songData = cmd.SongData;
-                            if (songData.SongByteArray != null)
+
+                            if (ConnectionManager.Instance.IsMaster)
                             {
-                                SaveSong(songData.SongByteArray, songData.Name);
+                                if (songData.SongByteArray != null)
+                                {
+                                    SaveSong(songData.SongByteArray, songData.Name);
+                                    await dispatcher.RunAsync(CoreDispatcherPriority.High, () =>
+                                    {
+                                        SongCollection.Add(new Song() { name = songData.Name });
+                                    });
+                                    sd.SendActionToServer(CommandList.LISTUPDATE, "", -1, null, SongCollection.ToList());
+                                }
                             }
-                            await dispatcher.RunAsync(CoreDispatcherPriority.High, () =>
-                            {
-                                SongCollection.Add(new Song() { name = songData.Name });
-                            });
                         }
                         break;
                     case CommandList.REMOVE:
                         {
                             int index = cmd.songIndex;
-                            SongCollection.RemoveAt(index);
+                            if (ConnectionManager.Instance.IsMaster)
+                            {
+                                await dispatcher.RunAsync(CoreDispatcherPriority.High, () =>
+                                {
+                                    SongCollection.RemoveAt(index);
+                                });
+                                sd.SendActionToServer(CommandList.LISTUPDATE, "", -1, null, SongCollection.ToList());
+                            }
                         }
                         break;
                     case CommandList.NEXT:
@@ -137,6 +149,18 @@ namespace Hackday
                             }
                         }
                         break;
+                    case CommandList.LISTUPDATE:
+                        if (!ConnectionManager.Instance.IsMaster)
+                        {
+                            if (cmd.SongList == null || cmd.SongList.Count < 1) return;
+                            await dispatcher.RunAsync(CoreDispatcherPriority.High, () =>
+                            {
+                                SongCollection.Clear();
+                                foreach (var item in cmd.SongList)
+                                    SongCollection.Add(item);
+                            });
+                        }
+                        break;
                     default:
                         break;
                 }
@@ -165,7 +189,7 @@ namespace Hackday
         private void RemoveSong(object sender, TappedRoutedEventArgs e)
         {
             Button b = sender as Button;
-            Song s= b.DataContext as Song;
+            Song s = b.DataContext as Song;
             int index = SongCollection.IndexOf(s);
             SongCollection.Remove(s);
             sd.SendActionToServer(CommandList.REMOVE, s.name, index, null);
@@ -177,9 +201,9 @@ namespace Hackday
             Button b = sender as Button;
             Song s = b.DataContext as Song;
             CurrentSong = s;
-            
+
             PlayMusic(CurrentSong);
-           
+
             sd.SendActionToServer(CommandList.TOGGLEPLAYSTATE, s.name, SongCollection.IndexOf(s), null);
         }
 
@@ -195,7 +219,7 @@ namespace Hackday
             PauseOrPlay.Content = "Play";
             PauseOrPlay.Click -= pauseSongs;
             PauseOrPlay.Click += playSongs;
-            sd.SendActionToServer(CommandList.TOGGLEPLAYSTATE,CurrentSong.name, -1, null);
+            sd.SendActionToServer(CommandList.TOGGLEPLAYSTATE, CurrentSong.name, -1, null);
 
         }
 
@@ -211,7 +235,7 @@ namespace Hackday
             PauseOrPlay.Content = "Pause";
             PauseOrPlay.Click -= playSongs;
             PauseOrPlay.Click += pauseSongs;
-            sd.SendActionToServer(CommandList.TOGGLEPLAYSTATE,CurrentSong.name, -1, null);
+            sd.SendActionToServer(CommandList.TOGGLEPLAYSTATE, CurrentSong.name, -1, null);
         }
 
         public async void ContinueFileOpenPicker(FileOpenPickerContinuationEventArgs args)
@@ -222,7 +246,8 @@ namespace Hackday
                 // Application now has read/write access to the picked file(s)
                 foreach (StorageFile file in files)
                 {
-                    SongCollection.Add(new Song() { name = file.Name });
+                    if (ConnectionManager.Instance.IsMaster)
+                        SongCollection.Add(new Song() { name = file.Name });
                     if (ConnectionManager.Instance.IsMaster)
                     {
                         sd.SendActionToServer(CommandList.ADD, file.Name, -1, null);
@@ -246,7 +271,7 @@ namespace Hackday
             var folder = KnownFolders.MusicLibrary;
             StorageFile file = await folder.GetFileAsync(song.name);
             Stream stream = await file.OpenStreamForReadAsync();
-           
+
             if (ConnectionManager.Instance.IsMaster)
             {
                 await dispatcher.RunAsync(CoreDispatcherPriority.High, () =>
@@ -287,8 +312,8 @@ namespace Hackday
 
         private void next_song(object sender, RoutedEventArgs e)
         {
-            int currentIndex=SongCollection.IndexOf(CurrentSong);
-            if (currentIndex != SongCollection.Count-1)
+            int currentIndex = SongCollection.IndexOf(CurrentSong);
+            if (currentIndex != SongCollection.Count - 1)
             {
                 CurrentSong = SongCollection.ElementAt(++currentIndex);
                 if (ConnectionManager.Instance.IsMaster)

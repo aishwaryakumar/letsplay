@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
@@ -15,7 +16,8 @@ namespace Hackday
         NEXT,
         PREVIOUS,
         TOGGLEPLAYSTATE,
-        NONE
+        NONE,
+        LISTUPDATE
     }
 
     public class SongData
@@ -29,6 +31,7 @@ namespace Hackday
         public CommandList command;
         public int songIndex;
         public SongData SongData;
+        public List<Song> SongList;
     }
 
     public class SenderData
@@ -69,7 +72,7 @@ namespace Hackday
             return str;
         }
 
-        public void SendActionToServer(CommandList ActionRequested, string name = "", int index = -1, byte[] data = null)
+        public void SendActionToServer(CommandList ActionRequested, string name = "", int index = -1, byte[] data = null, List<Song> songList  = null)
         {
             Command cmd = new Command();
             switch (ActionRequested)
@@ -92,6 +95,10 @@ namespace Hackday
                     break;
                 case CommandList.TOGGLEPLAYSTATE:
                     cmd.command = CommandList.TOGGLEPLAYSTATE;
+                    break;
+                case CommandList.LISTUPDATE:
+                    cmd.command = CommandList.LISTUPDATE;
+                    cmd.SongList = songList;
                     break;
                 default:
                     cmd.command = CommandList.NONE;
