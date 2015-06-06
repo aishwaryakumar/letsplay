@@ -89,12 +89,15 @@ namespace Hackday
                     break;
                 case CommandList.NEXT:
                     cmd.command = CommandList.NEXT;
+                    cmd.songIndex = index;
                     break;
                 case CommandList.PREVIOUS:
                     cmd.command = CommandList.PREVIOUS;
+                    cmd.songIndex = index;
                     break;
                 case CommandList.TOGGLEPLAYSTATE:
                     cmd.command = CommandList.TOGGLEPLAYSTATE;
+                    cmd.songIndex = index;
                     break;
                 case CommandList.LISTUPDATE:
                     cmd.command = CommandList.LISTUPDATE;

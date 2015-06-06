@@ -126,25 +126,38 @@ namespace Hackday
                             }
                             else
                             {
-                                if (Player.CurrentState == MediaElementState.Playing)
+                                MediaElementState m = MediaElementState.Closed;
+                                await dispatcher.RunAsync(CoreDispatcherPriority.High, () =>
+                                {
+                                   m= Player.CurrentState;
+                                });
+                                if (m == MediaElementState.Playing)
                                 {
                                     if (ConnectionManager.Instance.IsMaster)
                                     {
-                                        Player.Pause();
+                                        await dispatcher.RunAsync(CoreDispatcherPriority.High, () =>
+                                        {
+                                            Player.Pause();
+                                            PauseOrPlay.Content = "Play";
+                                            PauseOrPlay.Click -= pauseSongs;
+                                            PauseOrPlay.Click += playSongs;
+                                        });
                                     }
-                                    PauseOrPlay.Content = "Play";
-                                    PauseOrPlay.Click -= pauseSongs;
-                                    PauseOrPlay.Click += playSongs;
+                                    
                                 }
                                 else
                                 {
                                     if (ConnectionManager.Instance.IsMaster)
                                     {
-                                        Player.Play();
+                                        await dispatcher.RunAsync(CoreDispatcherPriority.High, () =>
+                                        {
+                                            Player.Play();
+                                            PauseOrPlay.Content = "Pause";
+                                            PauseOrPlay.Click -= playSongs;
+                                            PauseOrPlay.Click += pauseSongs;
+                                        });
                                     }
-                                    PauseOrPlay.Content = "Pause";
-                                    PauseOrPlay.Click -= playSongs;
-                                    PauseOrPlay.Click += pauseSongs;
+                                    
                                 }
                             }
                         }
