@@ -265,7 +265,7 @@ namespace Hackday
             PlayOrPause.Symbol = Symbol.Play;
             PauseOrPlay.Click -= pauseSongs;
             PauseOrPlay.Click += playSongs;
-            sd.SendActionToServer(CommandList.TOGGLEPLAYSTATE, CurrentSong.name, -1, null);
+            sd.SendActionToServer(CommandList.TOGGLEPLAYSTATE, "", -1, null);
 
         }
 
@@ -281,7 +281,7 @@ namespace Hackday
             PlayOrPause.Symbol = Symbol.Pause;
             PauseOrPlay.Click -= playSongs;
             PauseOrPlay.Click += pauseSongs;
-            sd.SendActionToServer(CommandList.TOGGLEPLAYSTATE, CurrentSong.name, -1, null);
+            sd.SendActionToServer(CommandList.TOGGLEPLAYSTATE, "", -1, null);
         }
 
         public async void ContinueFileOpenPicker(FileOpenPickerContinuationEventArgs args)
