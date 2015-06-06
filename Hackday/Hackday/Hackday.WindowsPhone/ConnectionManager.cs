@@ -8,6 +8,8 @@ using System.Threading.Tasks;
 using Windows.Networking.Proximity;
 using Windows.Networking.Sockets;
 using Windows.Storage.Streams;
+using Windows.System.Threading;
+using Windows.UI.Core;
 using Windows.UI.Xaml;
 
 namespace Hackday
@@ -25,7 +27,6 @@ namespace Hackday
         private static ConnectionManager _instance;
         private ConnectionManager()
         {
-            Init();
         }
 
         public void SetDataListener(DataListener listener)
@@ -45,14 +46,14 @@ namespace Hackday
             }
         }
 
-        public async void Init()
+        public async void Init(CoreDispatcher disp)
         {
+            this.dispatcher = disp;
             await Task.Yield();
-
             // PeerFinder.Start() is used to advertise our presence so that peers can find us. 
             // It must always be called before FindAllPeersAsync.
             PeerFinder.Start();
-
+            PeerFinder.ConnectionRequested -= PeerFinder_ConnectionRequested;
             PeerFinder.ConnectionRequested += PeerFinder_ConnectionRequested;
         }
 
@@ -86,10 +87,16 @@ namespace Hackday
                 PeerFinder.ConnectionRequested -= PeerFinder_ConnectionRequested;
                 master = socket;
                 appendText("\n connection complete");
-                var dispatcherTimer = new DispatcherTimer();
-                dispatcherTimer.Tick += new EventHandler<object>(getDataFromMaster);
-                dispatcherTimer.Interval = new TimeSpan(0, 0, 1);
-                dispatcherTimer.Start();
+
+                GetDataFromMaster();
+                //await dispatcher.RunAsync(CoreDispatcherPriority.High, () =>
+                //{
+                //    var dispatcherTimer = new DispatcherTimer();
+                //    dispatcherTimer.Tick += new EventHandler<object>(getDataFromMaster);
+                //    dispatcherTimer.Interval = new TimeSpan(0, 0, 1);
+                //    dispatcherTimer.Start();
+
+                //});
 
                 //appendText("\nconnection established");
                 //using (var stream = socket.InputStream)
@@ -108,25 +115,30 @@ namespace Hackday
             }
         }
         const int CONTROL_SIZE = 10;
-        private void getDataFromMaster(object sender, object e)
+        private CoreDispatcher dispatcher;
+        bool isReadingMaster = false;
+        private async void GetDataFromMaster()
         {
             try
             {
                 string inp = "";
+                if (isReadingMaster)
+                    return;
                 if (master != null)
                 {
-                    DataReader reader = new DataReader(master.InputStream);
                     bool received = false;
                     do
                     {
                         received = false;
-                        var len = reader.ReadString(CONTROL_SIZE);
+
+                        var len = await ReadData(master, CONTROL_SIZE);
                         uint length = 0;
                         if (uint.TryParse(len, out length))
                         {
+                            isReadingMaster = true;
                             if (length > 0)
                             {
-                                inp = reader.ReadString(length);
+                                inp = await ReadData(master, length);
                                 if (listener != null)
                                 {
                                     listener.OnDataFromMaster(inp);
@@ -139,11 +151,15 @@ namespace Hackday
                             }
                         }
                     }
-                    while (received);
+                    while (true);
+                    isReadingMaster = false;
+                    GetDataFromMaster();
                 }
             }
             catch (Exception ex)
             {
+                isReadingMaster = false;
+                GetDataFromMaster();
                 //appendText(ex.Message);
             }
         }
@@ -198,12 +214,15 @@ namespace Hackday
                         //return appendText(ex.Message);
                     }
                 }
+                isReadingFromSlave = new List<bool>(slaves.Count);
+
                 PeerFinder.ConnectionRequested -= PeerFinder_ConnectionRequested;
                 IsMaster = true;
-                var dispatcherTimer = new DispatcherTimer();
-                dispatcherTimer.Tick += new EventHandler<object>(getDataFromSlaves);
-                dispatcherTimer.Interval = new TimeSpan(0, 0, 2);
-                dispatcherTimer.Start();
+                GetDataFromSlaves();
+                //var dispatcherTimer = new DispatcherTimer();
+                //dispatcherTimer.Tick += new EventHandler<object>(getDataFromSlaves);
+                //dispatcherTimer.Interval = new TimeSpan(0, 0, 2);
+                //dispatcherTimer.Start();
                 return names;
                 //var buffer = WindowsRuntimeBufferExtensions.AsBuffer(buf);
                 //foreach (var s in sockets)
@@ -218,44 +237,18 @@ namespace Hackday
                 //}
             }
         }
+        List<bool> isReadingFromSlave;
 
-        private void getDataFromSlaves(object sender, object e)
+        private void GetDataFromSlaves()
         {
             try
             {
-                string inp = "";
                 if (slaves != null && slaves.Count > 0)
                 {
                     foreach (var pair in slaves)
                     {
                         var sock = pair.Value;
-                        DataReader reader = new DataReader(sock.InputStream);
-                        bool received = false;
-                        //inp = reader.ReadString(5);
-                        //OnSlaveDataReceived(inp);
-                        do
-                        {
-                            received = false;
-                            var len = reader.ReadString(CONTROL_SIZE);
-                            uint length = 0;
-                            if (uint.TryParse(len, out length))
-                            {
-                                if (length > 0)
-                                {
-                                    inp = reader.ReadString(length);
-                                    if (listener != null)
-                                    {
-                                        listener.OnDataFromSlaves(inp);
-                                    }
-                                    if (OnSlaveDataReceived != null)
-                                    {
-                                        OnSlaveDataReceived(inp);
-                                    }
-                                    received = true;
-                                }
-                            }
-                        }
-                        while (received);
+                        GetDataFromASlave(sock);
                     }
                 }
             }
@@ -265,18 +258,71 @@ namespace Hackday
             }
         }
 
-        public async void SendData(byte[] data)
+        private void GetDataFromASlave(StreamSocket sock)
         {
-            if (slaves.Count > 0)
+            Task.Factory.StartNew(async () =>
             {
-                var buffer = WindowsRuntimeBufferExtensions.AsBuffer(data);
-                foreach (var pair in slaves)
+                bool received = false;
+
+                string inp = "";
+                do
                 {
-                    var name = pair.Key;
-                    var sock = pair.Value;
-                    await sock.OutputStream.WriteAsync(buffer);
+                    received = false;
+                    var len = await ReadData(sock, CONTROL_SIZE);
+                    uint length = 0;
+                    if (uint.TryParse(len, out length))
+                    {
+                        if (length > 0)
+                        {
+                            inp = await ReadData(sock, length);
+                            if (listener != null)
+                            {
+                                listener.OnDataFromSlaves(inp);
+                            }
+                            if (OnSlaveDataReceived != null)
+                            {
+                                OnSlaveDataReceived(inp);
+                            }
+                            received = true;
+                        }
+                    }
                 }
+                while (true);
+            });
+        }
+
+        private async Task<string> ReadData(StreamSocket sock, uint numchars)
+        {
+            try
+            {
+                uint size = numchars * 2;
+                byte[] buf = new byte[size];
+                var buffer = WindowsRuntimeBufferExtensions.AsBuffer(buf);
+                await sock.InputStream.ReadAsync(buffer, size, InputStreamOptions.None);
+                return GetString(buffer.ToArray());
             }
+            catch (Exception e)
+            {
+                Debug.WriteLine(e.Message);
+            }
+            return "";
+        }
+
+        public async void SendData(StreamSocket socket, byte[] data)
+        {
+            //if (slaves.Count > 0)
+            //{
+            //    var buffer = WindowsRuntimeBufferExtensions.AsBuffer(data);
+            //    foreach (var pair in slaves)
+            //    {
+            //        var name = pair.Key;
+            //        var sock = pair.Value;
+            //        await sock.OutputStream.WriteAsync(buffer);
+            //    }
+            //}
+            var buffer = WindowsRuntimeBufferExtensions.AsBuffer(data);
+            await socket.OutputStream.WriteAsync(buffer);
+            await socket.OutputStream.FlushAsync();
         }
 
         public void SendData(string data)
@@ -301,12 +347,13 @@ namespace Hackday
             }
         }
 
-        private async void writedata(StreamSocket socket, string data)
+        private void writedata(StreamSocket socket, string data)
         {
-            DataWriter writer = new DataWriter(socket.OutputStream);
-            Debug.WriteLine(data.Substring(0, 10));
-            writer.WriteString(data);
-            await writer.StoreAsync();
+            SendData(socket, GetBytes(data));
+            //DataWriter writer = new DataWriter(socket.OutputStream);
+            //Debug.WriteLine(data.Substring(0, 10));
+            //writer.WriteString(data);
+            //await writer.StoreAsync();
         }
 
         static byte[] GetBytes(string str)

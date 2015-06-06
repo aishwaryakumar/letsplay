@@ -11,6 +11,7 @@ using Windows.Foundation;
 using Windows.Foundation.Collections;
 using Windows.Storage;
 using Windows.Storage.Pickers;
+using Windows.UI.Core;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Controls.Primitives;
@@ -29,6 +30,7 @@ namespace Hackday
     public sealed partial class MediaPlayer : Page, IFileOpenPickerContinuable
     {
         Song CurrentSong;
+        CoreDispatcher dispatcher;
         ObservableCollection<Song> SongCollection = new ObservableCollection<Song>();
         SenderData sd;
         public MediaPlayer()
@@ -42,6 +44,7 @@ namespace Hackday
 
             ConnectionManager.Instance.OnMasterDataReceived += DataReceived;
             ConnectionManager.Instance.OnSlaveDataReceived += DataReceived;
+            this.dispatcher = Windows.UI.Core.CoreWindow.GetForCurrentThread().Dispatcher;
         }
 
         private void DataReceived(string data)
@@ -53,7 +56,7 @@ namespace Hackday
             }
         }
 
-        private void sd_ActionRequested(Command cmd)
+        private async void sd_ActionRequested(Command cmd)
         {
             if (cmd != null)
             {
@@ -62,11 +65,14 @@ namespace Hackday
                     case CommandList.ADD:
                         {
                             SongData songData = cmd.SongData;
-                            if(songData.SongByteArray != null)
+                            if (songData.SongByteArray != null)
                             {
                                 SaveSong(songData.SongByteArray, songData.Name);
                             }
-                            SongCollection.Add(new Song() { name = songData.Name });
+                            await dispatcher.RunAsync(CoreDispatcherPriority.High, () =>
+                            {
+                                SongCollection.Add(new Song() { name = songData.Name });
+                            });
                         }
                         break;
                     case CommandList.REMOVE:
@@ -147,7 +153,7 @@ namespace Hackday
         }
 
         private void add_songs(object sender, RoutedEventArgs e)
-        {            
+        {
             FileOpenPicker openPicker = new FileOpenPicker();
             openPicker.ViewMode = PickerViewMode.Thumbnail;
             openPicker.SuggestedStartLocation = PickerLocationId.MusicLibrary;
@@ -211,7 +217,7 @@ namespace Hackday
                 foreach (StorageFile file in files)
                 {
                     SongCollection.Add(new Song() { name = file.Name });
-                    if(ConnectionManager.Instance.IsMaster)
+                    if (ConnectionManager.Instance.IsMaster)
                     {
                         sd.SendActionToServer(CommandList.ADD, file.Name, -1, null);
                     }
@@ -220,7 +226,7 @@ namespace Hackday
                         Stream stream = await file.OpenStreamForReadAsync();
                         byte[] bytearray = new byte[(int)stream.Length];
                         bytearray = ConverToByteArray(stream);
-                        sd.SendActionToServer(CommandList.ADD,file.Name, -1, bytearray);
+                        sd.SendActionToServer(CommandList.ADD, file.Name, -1, bytearray);
                     }
                 }
             }
@@ -299,8 +305,8 @@ namespace Hackday
     }
     public class Song
     {
-        public string name { get;set; }
+        public string name { get; set; }
         public string path { get; set; }
-                            
+
     }
 }
