@@ -297,15 +297,45 @@ namespace Hackday
             {
                 uint size = numchars * 2;
                 byte[] buf = new byte[size];
-                var buffer = WindowsRuntimeBufferExtensions.AsBuffer(buf);
-                await sock.InputStream.ReadAsync(buffer, size, InputStreamOptions.None);
-                return GetString(buffer.ToArray());
+                if (size >= 1024)
+                {
+                    uint bytesDone = 0;
+                    uint bytesLeft = size;
+                    uint toread = 1024;
+                    while (bytesLeft > 0)
+                    {
+                        byte[] temp = new byte[toread];
+                        var buffer = temp.AsBuffer();
+                        await sock.InputStream.ReadAsync(buffer, toread, InputStreamOptions.None);
+                        buffer.CopyTo(0, buf, (int)bytesDone, (int)buffer.Length);
+                        bytesDone += buffer.Length;
+                        bytesLeft -= buffer.Length;
+                        toread = bytesLeft > 1024 ? 1024 : bytesLeft;
+                        //var data = buffer.ToArray();
+                        //CopyTo(data, buf, bytesDone);
+                    }
+                    return GetString(buf);
+                }
+                else
+                {
+                    var buffer = buf.AsBuffer();
+                    await sock.InputStream.ReadAsync(buffer, size, InputStreamOptions.None);
+                    return GetString(buffer.ToArray());
+                }
             }
             catch (Exception e)
             {
                 Debug.WriteLine(e.Message);
             }
             return "";
+        }
+
+        void CopyTo(byte[] source, byte[] dest, uint startIndex)
+        {
+            for (int i = 0; i < source.Length; i++)
+            {
+                dest[startIndex + i] = source[i];
+            }
         }
 
         public async void SendData(StreamSocket socket, byte[] data)
@@ -351,7 +381,7 @@ namespace Hackday
         {
             SendData(socket, GetBytes(data));
             //DataWriter writer = new DataWriter(socket.OutputStream);
-            //Debug.WriteLine(data.Substring(0, 10));
+            Debug.WriteLine(data.Substring(0, 10));
             //writer.WriteString(data);
             //await writer.StoreAsync();
         }
